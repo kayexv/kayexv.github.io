@@ -1,4 +1,4 @@
-/* 全局样式设置 */
+/* 全局样式 */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
@@ -21,14 +21,15 @@ body {
     max-width: 400px;
 }
 
-/* 标题样式 */
-h1 {
+/* 主标题样式 */
+.main-title {
     font-size: 2.2em;
     margin-bottom: 20px;
     color: #555;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* 部分标题样式 */
 h2 {
     font-size: 1.5em;
     margin-bottom: 15px;
@@ -74,24 +75,42 @@ button:hover {
 }
 
 /* 书签列表样式 */
-#bookmark-list {
+.bookmark-list {
     list-style-type: none;
     padding: 0;
     margin-top: 20px;
 }
 
-#bookmark-list li {
+/* 分组标题样式 */
+.bookmark-group {
+    margin-bottom: 20px;
+}
+
+.bookmark-group h3 {
+    font-size: 1.3em;
+    color: #444;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.bookmark-group ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.bookmark-group li {
     margin-bottom: 10px;
 }
 
-#bookmark-list a {
+.bookmark-group a {
     color: #007BFF;
     text-decoration: none;
     font-size: 1.1em;
     transition: color 0.3s ease;
 }
 
-#bookmark-list a:hover {
+.bookmark-group a:hover {
     color: #0056b3;
     text-decoration: underline;
 }
