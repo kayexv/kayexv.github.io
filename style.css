@@ -56,3 +56,8 @@ p {
 #bookmark-container a:hover {
     color: #2980b9;
 }
+
+#loading-message {
+    text-align: center;
+    color: #777;
+}
