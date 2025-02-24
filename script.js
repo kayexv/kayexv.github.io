@@ -1,46 +1,54 @@
-// 从GitHub仓库加载书签文件
+// 获取北京时间时钟
+function getBeijingTime() {
+    const now = new Date();
+    const offset = 8; // 北京时间为 UTC+8
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const beijingTime = new Date(utc + (3600000 * offset));
+    const hours = String(beijingTime.getHours()).padStart(2, '0');
+    const minutes = String(beijingTime.getMinutes()).padStart(2, '0');
+    const seconds = String(beijingTime.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+// 更新时钟显示
+function updateClock() {
+    const clockElement = document.getElementById('clock');
+    clockElement.textContent = `北京时间: ${getBeijingTime()}`;
+}
+
+// 每秒更新一次时钟
+setInterval(updateClock, 1000);
+updateClock();
+
+// 加载书签文件
 fetch('https://raw.githubusercontent.com/kayexv/kayexv.github.io/main/bookmarks.html')
-  .then(response => response.text())
-  .then(data => {
+   .then(response => response.text())
+   .then(data => {
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(data, 'text/html');
+        const folders = htmlDoc.querySelectorAll('dl');
 
-        const dlElements = htmlDoc.getElementsByTagName('DL');
-        const container = document.getElementById('bookmark-container');
+        const bookmarksContainer = document.getElementById('bookmarks-container');
 
-        // 遍历每个DL元素，处理书签分组
-        for (let i = 0; i < dlElements.length; i++) {
-            const dt = dlElements[i].previousElementSibling;
-            if (dt && dt.tagName === 'DT') {
-                const h3 = dt.querySelector('H3');
-                if (h3) {
-                    const groupTitle = h3.textContent;
-                    const groupDiv = document.createElement('div');
-                    groupDiv.classList.add('group');
+        folders.forEach(folder => {
+            const folderTitle = folder.previousElementSibling.textContent;
+            const h2 = document.createElement('h2');
+            h2.textContent = folderTitle;
+            bookmarksContainer.appendChild(h2);
 
-                    const titleDiv = document.createElement('div');
-                    titleDiv.classList.add('group-title');
-                    titleDiv.textContent = groupTitle;
-                    titleDiv.addEventListener('click', function () {
-                        const contentDiv = this.nextElementSibling;
-                        contentDiv.style.display = contentDiv.style.display === 'none' ? 'block' : 'none';
-                    });
-                    groupDiv.appendChild(titleDiv);
-
-                    const contentDiv = document.createElement('div');
-                    contentDiv.classList.add('group-content');
-                    const links = dlElements[i].getElementsByTagName('A');
-                    for (let j = 0; j < links.length; j++) {
-                        const link = document.createElement('a');
-                        link.href = links[j].href;
-                        link.textContent = links[j].textContent;
-                        contentDiv.appendChild(link);
-                    }
-                    groupDiv.appendChild(contentDiv);
-
-                    container.appendChild(groupDiv);
-                }
-            }
-        }
+            const ul = document.createElement('ul');
+            const links = folder.querySelectorAll('a');
+            links.forEach(link => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = link.href;
+                a.textContent = link.textContent;
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            bookmarksContainer.appendChild(ul);
+        });
     })
-  .catch(error => console.error('加载书签文件时出错:', error));
+   .catch(error => {
+        console.error('加载书签文件时出错:', error);
+    });
