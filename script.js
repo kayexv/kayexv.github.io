@@ -8,7 +8,7 @@ const bookmarkSection = document.getElementById('bookmark-section');
 const bookmarkList = document.getElementById('bookmark-list');
 
 // 登录按钮点击事件处理函数
-loginButton.addEventListener('click', function() {
+loginButton.addEventListener('click', function () {
     const inputPassword = passwordInput.value;
     if (inputPassword === correctPassword) {
         loginSection.style.display = 'none';
@@ -31,14 +31,31 @@ function fetchBookmarks() {
       .then(data => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(data, 'text/html');
-            const links = htmlDoc.querySelectorAll('a');
-            links.forEach(link => {
-                const listItem = document.createElement('li');
-                const anchor = document.createElement('a');
-                anchor.href = link.href;
-                anchor.textContent = link.textContent;
-                listItem.appendChild(anchor);
-                bookmarkList.appendChild(listItem);
+            const folders = htmlDoc.querySelectorAll('dl > dt');
+
+            folders.forEach(folder => {
+                const folderTitle = folder.querySelector('h3');
+                if (folderTitle) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.classList.add('bookmark-group');
+
+                    const groupTitle = document.createElement('h3');
+                    groupTitle.textContent = folderTitle.textContent;
+                    groupDiv.appendChild(groupTitle);
+
+                    const groupList = document.createElement('ul');
+                    const links = folder.querySelectorAll('a');
+                    links.forEach(link => {
+                        const listItem = document.createElement('li');
+                        const anchor = document.createElement('a');
+                        anchor.href = link.href;
+                        anchor.textContent = link.textContent;
+                        listItem.appendChild(anchor);
+                        groupList.appendChild(listItem);
+                    });
+                    groupDiv.appendChild(groupList);
+                    bookmarkList.appendChild(groupDiv);
+                }
             });
         })
       .catch(error => {
