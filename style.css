@@ -12,40 +12,33 @@ body {
     padding: 20px;
 }
 
-#bookmarks-container {
-    padding: 20px;
-}
-
-.folder {
-    margin-bottom: 20px;
+.group {
+    margin: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.folder-header {
+.group-title {
     padding: 10px;
-    background-color: #eee;
+    background-color: #f0f0f0;
     cursor: pointer;
     font-weight: bold;
 }
 
-.folder-header:hover {
-    background-color: #ddd;
-}
-
-.folder-content {
+.group-content {
+    display: none;
     padding: 10px;
-    border-top: 1px solid #ccc;
 }
 
-.folder-content a {
+.group-content a {
     display: block;
     margin-bottom: 5px;
     color: #007BFF;
     text-decoration: none;
 }
 
-.folder-content a:hover {
+.group-content a:hover {
     text-decoration: underline;
 }
