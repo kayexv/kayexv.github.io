@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
@@ -13,8 +13,65 @@
         <h1>KAYEXV书签</h1>
         <p>个人网站，勿扰</p>
     </div>
-    <div id="bookmark-container"></div>
+    <div id="bookmarks-container"></div>
+
     <script src="script.js"></script>
+    <script>
+        const githubUsername = 'kayexv';
+        const githubRepo = 'kayexv.github.io';
+        const bookmarksFilePath = 'bookmarks.html';
+        const apiUrl = `https://raw.githubusercontent.com/${githubUsername}/${githubRepo}/main/${bookmarksFilePath}`;
+
+        fetch(apiUrl)
+          .then(response => response.text())
+          .then(data => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const folders = doc.querySelectorAll('DT > H3');
+
+                folders.forEach(folder => {
+                    const folderName = folder.textContent;
+                    const links = [];
+                    const sibling = folder.nextElementSibling;
+                    if (sibling && sibling.tagName === 'DL') {
+                        const linkItems = sibling.querySelectorAll('DT > A');
+                        linkItems.forEach(link => {
+                            links.push({
+                                title: link.textContent,
+                                url: link.href
+                            });
+                        });
+                    }
+
+                    const folderDiv = document.createElement('div');
+                    folderDiv.classList.add('folder');
+
+                    const folderHeader = document.createElement('div');
+                    folderHeader.classList.add('folder-header');
+                    folderHeader.textContent = folderName;
+                    folderHeader.addEventListener('click', () => {
+                        const folderContent = folderHeader.nextElementSibling;
+                        folderContent.style.display = folderContent.style.display === 'none' ? 'block' : 'none';
+                    });
+                    folderDiv.appendChild(folderHeader);
+
+                    const folderContent = document.createElement('div');
+                    folderContent.classList.add('folder-content');
+                    folderContent.style.display = 'none';
+                    links.forEach(link => {
+                        const linkElement = document.createElement('a');
+                        linkElement.href = link.url;
+                        linkElement.textContent = link.title;
+                        linkElement.target = '_blank';
+                        folderContent.appendChild(linkElement);
+                    });
+                    folderDiv.appendChild(folderContent);
+
+                    document.getElementById('bookmarks-container').appendChild(folderDiv);
+                });
+            })
+          .catch(error => console.error('Error fetching bookmarks:', error));
+    </script>
 </body>
 
 </html>
