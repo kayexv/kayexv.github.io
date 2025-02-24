@@ -39,12 +39,14 @@ p {
     font-size: 1.8em;
     border-bottom: 1px solid #0f0;
     padding-bottom: 5px;
+    cursor: pointer;
 }
 
 .group ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
+    display: none; /* 默认隐藏 */
 }
 
 .group li {
@@ -59,4 +61,8 @@ p {
 
 .group a:hover {
     color: #fff;
+}
+
+.group.expanded ul {
+    display: block; /* 展开时显示 */
 }
