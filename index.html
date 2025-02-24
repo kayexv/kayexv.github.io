@@ -176,8 +176,10 @@
                 if (!response.ok) {
                     throw new Error('保存书签时出错');
                 }
+                alert('书签保存成功！');
             } catch (error) {
                 console.error('保存书签时出错:', error);
+                alert('保存书签时出现错误，请稍后重试。');
             }
         }
 
@@ -186,12 +188,14 @@
             const url = document.getElementById('bookmarkUrl').value;
 
             if (name && url) {
-                const bookmarks = await getBookmarks();
-                bookmarks.manual.push({ name, url });
-                await saveBookmarks(bookmarks);
-                displayBookmarks(bookmarks);
-                document.getElementById('bookmarkName').value = '';
-                document.getElementById('bookmarkUrl').value = '';
+                if (confirm('确认要添加这个书签吗？')) {
+                    const bookmarks = await getBookmarks();
+                    bookmarks.manual.push({ name, url });
+                    await saveBookmarks(bookmarks);
+                    displayBookmarks(bookmarks);
+                    document.getElementById('bookmarkName').value = '';
+                    document.getElementById('bookmarkUrl').value = '';
+                }
             }
         }
 
@@ -274,32 +278,38 @@
             const fileInput = document.getElementById('importFile');
             const file = fileInput.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = async function (e) {
-                    const htmlContent = e.target.result;
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlContent, 'text/html');
-                    const folders = doc.querySelectorAll('dl');
-                    const importedBookmarks = {};
+                if (confirm('确认要导入这些谷歌书签吗？')) {
+                    const reader = new FileReader();
+                    reader.onload = async function (e) {
+                        const htmlContent = e.target.result;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlContent, 'text/html');
+                        const allNodes = doc.body.childNodes;
+                        const importedBookmarks = {};
+                        let currentGroup = '未分组';
 
-                    folders.forEach(folder => {
-                        const folderTitle = folder.previousElementSibling && folder.previousElementSibling.tagName === 'DT' && folder.previousElementSibling.querySelector('h3') ? folder.previousElementSibling.querySelector('h3').textContent : '未分组';
-                        const links = folder.querySelectorAll('a');
-                        const groupBookmarks = [];
-                        links.forEach(link => {
-                            const name = link.textContent;
-                            const url = link.href;
-                            groupBookmarks.push({ name, url });
-                        });
-                        importedBookmarks[folderTitle] = groupBookmarks;
-                    });
+                        for (let i = 0; i < allNodes.length; i++) {
+                            const node = allNodes[i];
+                            if (node.tagName === 'DT' && node.querySelector('h3')) {
+                                currentGroup = node.querySelector('h3').textContent;
+                            } else if (node.tagName === 'DT' && node.querySelector('a')) {
+                                const link = node.querySelector('a');
+                                const name = link.textContent;
+                                const url = link.href;
+                                if (!importedBookmarks[currentGroup]) {
+                                    importedBookmarks[currentGroup] = [];
+                                }
+                                importedBookmarks[currentGroup].push({ name, url });
+                            }
+                        }
 
-                    const bookmarks = await getBookmarks();
-                    bookmarks.imported = importedBookmarks;
-                    await saveBookmarks(bookmarks);
-                    displayBookmarks(bookmarks);
-                };
-                reader.readAsText(file);
+                        const bookmarks = await getBookmarks();
+                        bookmarks.imported = { ...bookmarks.imported, ...importedBookmarks };
+                        await saveBookmarks(bookmarks);
+                        displayBookmarks(bookmarks);
+                    };
+                    reader.readAsText(file);
+                }
             }
         }
     </script>
