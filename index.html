@@ -25,6 +25,9 @@
             padding: 20px;
             width: 90%;
             max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         h1 {
@@ -91,6 +94,15 @@
             text-align: center;
             margin-bottom: 10px;
         }
+
+        #bookmarkContent {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        #addBookmarkSection {
+            margin-top: auto;
+        }
     </style>
 </head>
 
@@ -104,15 +116,18 @@
             <p class="error" id="errorMessage"></p>
         </div>
         <div id="bookmarkSection" style="display: none;">
-            <input type="text" id="bookmarkName" placeholder="书签名称">
-            <input type="text" id="bookmarkUrl" placeholder="书签链接">
-            <button onclick="addBookmark()">添加书签</button>
-            <input type="file" id="importFile" accept=".html">
-            <button onclick="importGoogleBookmarks()">导入谷歌书签</button>
-            <h2>手动添加的书签</h2>
-            <ul id="manualBookmarkList"></ul>
-            <h2>导入的谷歌书签</h2>
-            <ul id="importedBookmarkList"></ul>
+            <div id="bookmarkContent">
+                <h2>未归类书签</h2>
+                <ul id="manualBookmarkList"></ul>
+                <div id="importedBookmarkGroups"></div>
+            </div>
+            <div id="addBookmarkSection">
+                <input type="text" id="bookmarkName" placeholder="书签名称">
+                <input type="text" id="bookmarkUrl" placeholder="书签链接">
+                <button onclick="addBookmark()">添加书签</button>
+                <input type="file" id="importFile" accept=".html">
+                <button onclick="importGoogleBookmarks()">导入谷歌书签</button>
+            </div>
         </div>
     </div>
 
@@ -135,7 +150,7 @@
                 return JSON.parse(content);
             } catch (error) {
                 console.error('获取书签时出错:', error);
-                return { manual: [], imported: [] };
+                return { manual: [], imported: {} };
             }
         }
 
@@ -182,9 +197,9 @@
 
         function displayBookmarks(bookmarks) {
             const manualList = document.getElementById('manualBookmarkList');
-            const importedList = document.getElementById('importedBookmarkList');
+            const importedGroupsDiv = document.getElementById('importedBookmarkGroups');
             manualList.innerHTML = '';
-            importedList.innerHTML = '';
+            importedGroupsDiv.innerHTML = '';
 
             bookmarks.manual.forEach((bookmark, index) => {
                 const li = document.createElement('li');
@@ -200,19 +215,28 @@
                 manualList.appendChild(li);
             });
 
-            bookmarks.imported.forEach((bookmark, index) => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = bookmark.url;
-                a.textContent = bookmark.name;
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '删除';
-                deleteBtn.classList.add('delete-btn');
-                deleteBtn.onclick = () => deleteImportedBookmark(index);
-                li.appendChild(a);
-                li.appendChild(deleteBtn);
-                importedList.appendChild(li);
-            });
+            for (const group in bookmarks.imported) {
+                const groupDiv = document.createElement('div');
+                const groupHeading = document.createElement('h2');
+                groupHeading.textContent = group;
+                groupDiv.appendChild(groupHeading);
+                const groupList = document.createElement('ul');
+                bookmarks.imported[group].forEach((bookmark, index) => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = bookmark.url;
+                    a.textContent = bookmark.name;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '删除';
+                    deleteBtn.classList.add('delete-btn');
+                    deleteBtn.onclick = () => deleteImportedBookmark(group, index);
+                    li.appendChild(a);
+                    li.appendChild(deleteBtn);
+                    groupList.appendChild(li);
+                });
+                groupDiv.appendChild(groupList);
+                importedGroupsDiv.appendChild(groupDiv);
+            }
         }
 
         async function deleteManualBookmark(index) {
@@ -222,9 +246,9 @@
             displayBookmarks(bookmarks);
         }
 
-        async function deleteImportedBookmark(index) {
+        async function deleteImportedBookmark(group, index) {
             const bookmarks = await getBookmarks();
-            bookmarks.imported.splice(index, 1);
+            bookmarks.imported[group].splice(index, 1);
             await saveBookmarks(bookmarks);
             displayBookmarks(bookmarks);
         }
@@ -255,13 +279,21 @@
                     const htmlContent = e.target.result;
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(htmlContent, 'text/html');
-                    const links = doc.querySelectorAll('a');
-                    const importedBookmarks = [];
-                    links.forEach(link => {
-                        const name = link.textContent;
-                        const url = link.href;
-                        importedBookmarks.push({ name, url });
+                    const folders = doc.querySelectorAll('dl');
+                    const importedBookmarks = {};
+
+                    folders.forEach(folder => {
+                        const folderTitle = folder.previousElementSibling && folder.previousElementSibling.tagName === 'DT' && folder.previousElementSibling.querySelector('h3') ? folder.previousElementSibling.querySelector('h3').textContent : '未分组';
+                        const links = folder.querySelectorAll('a');
+                        const groupBookmarks = [];
+                        links.forEach(link => {
+                            const name = link.textContent;
+                            const url = link.href;
+                            groupBookmarks.push({ name, url });
+                        });
+                        importedBookmarks[folderTitle] = groupBookmarks;
                     });
+
                     const bookmarks = await getBookmarks();
                     bookmarks.imported = importedBookmarks;
                     await saveBookmarks(bookmarks);
