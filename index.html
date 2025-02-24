@@ -145,6 +145,13 @@
                         Authorization: `token ${GITHUB_TOKEN}`
                     }
                 });
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // 如果文件不存在，返回初始数据
+                        return { manual: [], imported: {} };
+                    }
+                    throw new Error(`获取书签时出错: ${response.statusText}`);
+                }
                 const data = await response.json();
                 const content = atob(data.content);
                 return JSON.parse(content);
@@ -174,7 +181,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('保存书签时出错');
+                    throw new Error(`保存书签时出错: ${response.statusText}`);
                 }
                 alert('书签保存成功！');
             } catch (error) {
@@ -284,27 +291,41 @@
                         const htmlContent = e.target.result;
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(htmlContent, 'text/html');
-                        const allNodes = doc.body.childNodes;
                         const importedBookmarks = {};
-                        let currentGroup = '未分组';
 
-                        for (let i = 0; i < allNodes.length; i++) {
-                            const node = allNodes[i];
-                            if (node.tagName === 'DT' && node.querySelector('h3')) {
-                                currentGroup = node.querySelector('h3').textContent;
-                            } else if (node.tagName === 'DT' && node.querySelector('a')) {
-                                const link = node.querySelector('a');
-                                const name = link.textContent;
-                                const url = link.href;
-                                if (!importedBookmarks[currentGroup]) {
-                                    importedBookmarks[currentGroup] = [];
+                        function parseBookmarkNode(node, currentGroup) {
+                            if (node.tagName === 'DT') {
+                                const h3 = node.querySelector('h3');
+                                if (h3) {
+                                    currentGroup = h3.textContent;
                                 }
-                                importedBookmarks[currentGroup].push({ name, url });
+                                const a = node.querySelector('a');
+                                if (a) {
+                                    const name = a.textContent;
+                                    const url = a.href;
+                                    if (!importedBookmarks[currentGroup]) {
+                                        importedBookmarks[currentGroup] = [];
+                                    }
+                                    importedBookmarks[currentGroup].push({ name, url });
+                                }
+                            }
+                            const children = node.childNodes;
+                            for (let i = 0; i < children.length; i++) {
+                                parseBookmarkNode(children[i], currentGroup);
                             }
                         }
 
+                        parseBookmarkNode(doc.body, '未分组');
+
                         const bookmarks = await getBookmarks();
-                        bookmarks.imported = { ...bookmarks.imported, ...importedBookmarks };
+                        // 合并新旧导入书签数据
+                        for (const group in importedBookmarks) {
+                            if (bookmarks.imported[group]) {
+                                bookmarks.imported[group] = [...bookmarks.imported[group], ...importedBookmarks[group]];
+                            } else {
+                                bookmarks.imported[group] = importedBookmarks[group];
+                            }
+                        }
                         await saveBookmarks(bookmarks);
                         displayBookmarks(bookmarks);
                     };
