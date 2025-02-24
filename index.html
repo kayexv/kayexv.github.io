@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KAYEXV书签</title>
     <link rel="stylesheet" href="style.css">
-    <!-- 引入 Font Awesome 图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-
 <body>
-    <div class="header">
-        <i class="fa-solid fa-bookmark"></i>
-        <h1>KAYEXV书签</h1>
-        <p>个人网站，勿扰</p>
+    <div class="container">
+        <h1>个人网站，勿扰</h1>
+        <div id="login-section">
+            <h2>请输入密码登录</h2>
+            <input type="password" id="password-input" placeholder="输入密码">
+            <button id="login-button">登录</button>
+        </div>
+        <div id="bookmark-section" style="display: none;">
+            <h2>KAYEXV书签</h2>
+            <div id="bookmark-list"></div>
+        </div>
     </div>
-    <div class="separator"></div>
-    <div id="bookmark-container"></div>
     <script src="script.js"></script>
 </body>
-
 </html>
