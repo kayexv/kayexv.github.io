@@ -1,63 +1,48 @@
-// 从 GitHub 获取 bookmarks.html 文件
-async function getBookmarksFromGitHub() {
-    try {
-        const response = await fetch('https://raw.githubusercontent.com/kayexv/kayexv.github.io/main/bookmarks.html');
-        if (response.ok) {
-            const html = await response.text();
+// 设定密码
+const correctPassword = '111111111';
+// 登录按钮和输入框的 DOM 元素
+const loginButton = document.getElementById('login-button');
+const passwordInput = document.getElementById('password-input');
+const loginSection = document.getElementById('login-section');
+const bookmarkSection = document.getElementById('bookmark-section');
+const bookmarkList = document.getElementById('bookmark-list');
+
+// 登录按钮点击事件处理函数
+loginButton.addEventListener('click', function() {
+    const inputPassword = passwordInput.value;
+    if (inputPassword === correctPassword) {
+        loginSection.style.display = 'none';
+        bookmarkSection.style.display = 'block';
+        fetchBookmarks();
+    } else {
+        alert('密码错误，请重新输入。');
+    }
+});
+
+// 从 GitHub 仓库获取书签文件的函数
+function fetchBookmarks() {
+    const githubUsername = 'kayexv';
+    const githubRepo = 'kayexv.github.io';
+    const filePath = 'bookmarks.html';
+    const url = `https://raw.githubusercontent.com/${githubUsername}/${githubRepo}/main/${filePath}`;
+
+    fetch(url)
+      .then(response => response.text())
+      .then(data => {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            return parseGoogleBookmarks(doc);
-        }
-    } catch (error) {
-        console.error('从 GitHub 获取书签数据时出错:', error);
-    }
-    return {};
-}
-
-// 解析谷歌浏览器书签文件（bookmarks.html）
-function parseGoogleBookmarks(doc) {
-    const groups = {};
-    const folders = doc.querySelectorAll('dt > h3');
-    folders.forEach(folder => {
-        const groupName = folder.textContent;
-        const links = [];
-        const dtElements = folder.parentNode.querySelectorAll('dt > a');
-        dtElements.forEach(link => {
-            links.push({
-                name: link.textContent,
-                url: link.href
+            const htmlDoc = parser.parseFromString(data, 'text/html');
+            const links = htmlDoc.querySelectorAll('a');
+            links.forEach(link => {
+                const listItem = document.createElement('li');
+                const anchor = document.createElement('a');
+                anchor.href = link.href;
+                anchor.textContent = link.textContent;
+                listItem.appendChild(anchor);
+                bookmarkList.appendChild(listItem);
             });
+        })
+      .catch(error => {
+            console.error('获取书签文件时出错:', error);
+            alert('无法获取书签文件，请稍后再试。');
         });
-        groups[groupName] = links;
-    });
-    return groups;
 }
-
-// 渲染书签
-function renderBookmarks(bookmarks) {
-    const container = document.getElementById('bookmark-container');
-    container.innerHTML = '';
-
-    // 渲染导入的书签
-    for (const group in bookmarks) {
-        const groupDiv = document.createElement('div');
-        groupDiv.innerHTML = `<h2>${group}</h2>`;
-        bookmarks[group].forEach(bookmark => {
-            const link = document.createElement('a');
-            link.href = bookmark.url;
-            link.textContent = bookmark.name;
-            link.target = '_blank';
-            groupDiv.appendChild(link);
-            groupDiv.appendChild(document.createElement('br'));
-        });
-        container.appendChild(groupDiv);
-    }
-}
-
-// 初始化页面
-async function init() {
-    const bookmarks = await getBookmarksFromGitHub();
-    renderBookmarks(bookmarks);
-}
-
-init();
